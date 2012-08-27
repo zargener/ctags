@@ -394,6 +394,14 @@ static void printRegexKind (const regexPattern *pat, unsigned int i, boolean ind
 			kind->enabled ? "" : " [off]");
 }
 
+static void printRegexKindName (const regexPattern *pat, unsigned int i, boolean indent)
+{
+	const struct sKind *const kind = &pat [i].u.tag.kind;
+	const char *const indentation = indent ? "    " : "";
+	Assert (pat [i].type == PTRN_TAG);
+	printf ("%s%s\n", indentation, kind->name);
+}
+
 static void processLanguageRegex (const langType language,
 		const char* const parameter)
 {
@@ -669,7 +677,7 @@ extern void printRegexKinds (const langType language __unused__, boolean indent 
 		unsigned int i;
 		for (i = 0  ;  i < set->count  ;  ++i)
 			if (set->patterns [i].type == PTRN_TAG)
-				printRegexKind (set->patterns, i, indent);
+				printRegexKindName (set->patterns, i, indent);
 	}
 #endif
 }

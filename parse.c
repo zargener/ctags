@@ -502,6 +502,13 @@ static void printLanguageKind (const kindOption* const kind, boolean indent)
 		kind->enabled ? "" : " [off]");
 }
 
+static void printLanguageKindName (const kindOption* const kind, boolean indent)
+{
+	const char *const indentation = indent ? "    " : "";
+	printf ("%s%s\n", indentation, (kind->name != NULL ? kind->name : ""));
+}
+
+
 static void printKinds (langType language, boolean indent)
 {
 	const parserDefinition* lang;
@@ -511,7 +518,7 @@ static void printKinds (langType language, boolean indent)
 	{
 		unsigned int i;
 		for (i = 0  ;  i < lang->kindCount  ;  ++i)
-			printLanguageKind (lang->kinds + i, indent);
+			printLanguageKindName (lang->kinds + i, indent);
 		printRegexKinds (language, indent);
 	}
 }
