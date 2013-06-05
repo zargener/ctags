@@ -357,10 +357,10 @@ static void findPHPTags (void) {
         if (curr_char == '*' && prev_char == '/' ) {
             /* printf ("ENTERED /\* ON %d\n", fpos); */
             while ( (curr_char = fileGetc()) != EOF) {
-                prev_char = curr_char;
                 fpos++;
                 if (curr_char == '/' && prev_char == '*')
                     break;
+                prev_char = curr_char;
             }
             /* printf ("EXITED /\* ON %d\n", fpos); */
             continue;
@@ -386,20 +386,20 @@ static void findPHPTags (void) {
         if (curr_char == '\'') {
             /* printf ("ENTERED \' ON %d\n", fpos); */
             while ( (curr_char = fileGetc()) != EOF) {
-                prev_char = curr_char;
                 fpos++;
                 if (curr_char == '\'' && prev_char != '\\')
                     break;
+                prev_char = curr_char;
             }
             /* printf ("EXITED \' ON %d\n", fpos); */
             continue;
         }
         if (curr_char == '\"') {
             while ( (curr_char = fileGetc()) != EOF) {
-                prev_char = curr_char;
                 fpos++;
                 if (curr_char == '\"' && prev_char != '\\')
                     break;
+                prev_char = curr_char;
             }
             continue;
         }
@@ -422,6 +422,7 @@ static void findPHPTags (void) {
             curr_char == '/' || curr_char == '[' || curr_char == '{' || curr_char == '}' ||
             curr_char == ')' || curr_char == '<' || curr_char == '.' || curr_char == ','
         ) {
+            /* printf("%s %s\n", prev_token, token); */
             handle_tokens(prev_token, token, fpos, brace_deep);
             if (token_len > 0) {
                 strncpy(prev_token, token, 255);
