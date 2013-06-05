@@ -144,9 +144,12 @@ int var_belongs_to_class(int fpos) {
 /**
  * Just shortcut for adding tag
  */
-void PHPMakeTag(char *tagname) {
+void PHPMakeTag(char *tagname, char* kname, char kind) {
     tagEntryInfo tag;
-    initTagEntry (&tag, tagname);
+    int copy_start = (tagname[0] == '$' ? 1 : 0);
+    initTagEntry (&tag, &tagname[copy_start]);
+	/* strncpy(tag.kindName, kname, 10); */
+	tag.kind = kind;
     makeTagEntry (&tag);
 }
 
@@ -171,11 +174,13 @@ void handle_tokens(char *prev_token,char *token, unsigned int pos, unsigned int 
             if (total_ns > 1) {
                 ns_nests[total_ns-1].end = pos;
             }
-            PHPMakeTag(token);
+            PHPMakeTag(token, "namespace", 'i');
             
         }
         /* index class */
-        if (strncmp(prev_token, "class",255) == 0)
+        if ( (strncmp(prev_token, "class",255) == 0) ||
+             (strncmp(prev_token, "interface",255) == 0)
+        )
         {
             if (total_classes < 1024) {
                 strncpy(class_nests[total_classes].name, token, 255);
@@ -184,7 +189,7 @@ void handle_tokens(char *prev_token,char *token, unsigned int pos, unsigned int 
                 class_nests[total_classes].end = 0;
                 total_classes++;
             }
-            PHPMakeTag(token);
+            PHPMakeTag(token, "class", 'c');
         }
 
         /* index function */
@@ -195,14 +200,13 @@ void handle_tokens(char *prev_token,char *token, unsigned int pos, unsigned int 
 
             if (ancestor >= 0) {
                 sprintf(tagname, "%s::%s", class_nests[ancestor].name, token);
-                PHPMakeTag(tagname);
+                PHPMakeTag(tagname, "function", 'f');
                 sprintf(tagname, "%s<%s>", token, class_nests[ancestor].name);
-                PHPMakeTag(tagname);
+                PHPMakeTag(tagname, "function", 'f');
             }
-            else {
-                strncpy(tagname, token, 255);
-                PHPMakeTag(tagname);
-            }
+
+            strncpy(tagname, token, 255);
+            PHPMakeTag(tagname, "function", 'f');
         }
 
         /* index variables and consts */
@@ -221,14 +225,12 @@ void handle_tokens(char *prev_token,char *token, unsigned int pos, unsigned int 
 
                 if (ancestor >= 0) {
                     sprintf(tagname, "%s::%s", class_nests[ancestor].name, token);
-                    PHPMakeTag(tagname);
+                    PHPMakeTag(tagname, "variable", 'v');
                     sprintf(tagname, "%s<%s>", token, class_nests[ancestor].name);
-                    PHPMakeTag(tagname);
+                    PHPMakeTag(tagname, "variable", 'v');
                 }
-                else {
-                    strncpy(tagname, token, 255);
-                    PHPMakeTag(tagname);
-                }
+                strncpy(tagname, token, 255);
+                PHPMakeTag(tagname, "variable", 'v');
             }
             /* index other variables */
             else {
@@ -252,13 +254,11 @@ void handle_tokens(char *prev_token,char *token, unsigned int pos, unsigned int 
                     char tagname[256];
                     if (ns >= 0) {
                         sprintf(tagname, "%s::%s", ns_nests[ns].name, token);
-                        PHPMakeTag(tagname);
+                        PHPMakeTag(tagname, "variable", 'v');
                         sprintf(tagname, "%s<%s>", token, ns_nests[ns].name);
-                        PHPMakeTag(tagname);
+                        PHPMakeTag(tagname, "variable", 'v');
                     }
-                    else {
-                        PHPMakeTag(token);
-                    }
+                    PHPMakeTag(token, "variable", 'v');
                 }
             }
             
