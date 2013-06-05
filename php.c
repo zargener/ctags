@@ -18,6 +18,7 @@
  *   INCLUDE FILES
  */
 #include "general.h"  /* must always come first */
+#include "options.h"
 
 #include <string.h>
 
@@ -146,7 +147,9 @@ int var_belongs_to_class(int fpos) {
  */
 void PHPMakeTag(char *tagname, char* kname, char kind) {
     tagEntryInfo tag;
-    int copy_start = (tagname[0] == '$' ? 1 : 0);
+    int copy_start = 0;
+    if (!Option.etags && tagname[0] == '$') 
+        copy_start = 1;
     initTagEntry (&tag, &tagname[copy_start]);
 	/* strncpy(tag.kindName, kname, 10); */
 	tag.kind = kind;
@@ -199,14 +202,20 @@ void handle_tokens(char *prev_token,char *token, unsigned int pos, unsigned int 
             char tagname[256];
 
             if (ancestor >= 0) {
-                sprintf(tagname, "%s::%s", class_nests[ancestor].name, token);
-                PHPMakeTag(tagname, "function", 'f');
+                if (Option.etags) {
+                    sprintf(tagname, "%s::%s", class_nests[ancestor].name, token);
+                    PHPMakeTag(tagname, "function", 'f');
+                }
+                else {
+                    PHPMakeTag(token, "function", 'f');
+                }
                 sprintf(tagname, "%s<%s>", token, class_nests[ancestor].name);
                 PHPMakeTag(tagname, "function", 'f');
             }
-
-            strncpy(tagname, token, 255);
-            PHPMakeTag(tagname, "function", 'f');
+            else {
+                strncpy(tagname, token, 255);
+                PHPMakeTag(tagname, "function", 'f');
+            }
         }
 
         /* index variables and consts */
@@ -224,13 +233,19 @@ void handle_tokens(char *prev_token,char *token, unsigned int pos, unsigned int 
                 char tagname[256];
 
                 if (ancestor >= 0) {
-                    sprintf(tagname, "%s::%s", class_nests[ancestor].name, token);
-                    PHPMakeTag(tagname, "variable", 'v');
+                    if (Option.etags) {
+                        sprintf(tagname, "%s::%s", class_nests[ancestor].name, token);
+                        PHPMakeTag(tagname, "variable", 'v');
+                    }
+                    else {
+                        PHPMakeTag(token, "variable", 'v');
+                    }
                     sprintf(tagname, "%s<%s>", token, class_nests[ancestor].name);
                     PHPMakeTag(tagname, "variable", 'v');
+                } else {
+                    strncpy(tagname, token, 255);
+                    PHPMakeTag(tagname, "variable", 'v');
                 }
-                strncpy(tagname, token, 255);
-                PHPMakeTag(tagname, "variable", 'v');
             }
             /* index other variables */
             else {
@@ -253,12 +268,20 @@ void handle_tokens(char *prev_token,char *token, unsigned int pos, unsigned int 
                     int ns = find_namespace(pos);
                     char tagname[256];
                     if (ns >= 0) {
-                        sprintf(tagname, "%s::%s", ns_nests[ns].name, token);
-                        PHPMakeTag(tagname, "variable", 'v');
+                        if (Option.etags) {
+                            sprintf(tagname, "%s::%s", ns_nests[ns].name, token);
+                            PHPMakeTag(tagname, "variable", 'v');
+                        }
+                        else {
+                            PHPMakeTag(token, "variable", 'v');
+                        }
+
                         sprintf(tagname, "%s<%s>", token, ns_nests[ns].name);
                         PHPMakeTag(tagname, "variable", 'v');
                     }
-                    PHPMakeTag(token, "variable", 'v');
+                    else {
+                        PHPMakeTag(token, "variable", 'v');
+                    }
                 }
             }
             
@@ -291,7 +314,7 @@ void close_block_hook(unsigned int brace_deep, unsigned int fpos, int line_numbe
 
 }
 
-
+/* extern optionValues Option; */
 /**
  * Main parser function, called each time new php file being processed.
  */
