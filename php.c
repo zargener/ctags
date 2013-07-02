@@ -202,13 +202,8 @@ void handle_tokens(char *prev_token,char *token, unsigned int pos, unsigned int 
             char tagname[256];
 
             if (ancestor >= 0) {
-                if (Option.etags) {
-                    sprintf(tagname, "%s::%s", class_nests[ancestor].name, token);
-                    PHPMakeTag(tagname, "function", 'f');
-                }
-                else {
-                    PHPMakeTag(token, "function", 'f');
-                }
+                PHPMakeTag(token, "function", 'f');
+
                 sprintf(tagname, "%s<%s>", token, class_nests[ancestor].name);
                 PHPMakeTag(tagname, "function", 'f');
             }
@@ -233,13 +228,7 @@ void handle_tokens(char *prev_token,char *token, unsigned int pos, unsigned int 
                 char tagname[256];
 
                 if (ancestor >= 0) {
-                    if (Option.etags) {
-                        sprintf(tagname, "%s::%s", class_nests[ancestor].name, token);
-                        PHPMakeTag(tagname, "variable", 'v');
-                    }
-                    else {
-                        PHPMakeTag(token, "variable", 'v');
-                    }
+                    PHPMakeTag(token, "variable", 'v');
                     sprintf(tagname, "%s<%s>", token, class_nests[ancestor].name);
                     PHPMakeTag(tagname, "variable", 'v');
                 } else {
@@ -268,13 +257,7 @@ void handle_tokens(char *prev_token,char *token, unsigned int pos, unsigned int 
                     int ns = find_namespace(pos);
                     char tagname[256];
                     if (ns >= 0) {
-                        if (Option.etags) {
-                            sprintf(tagname, "%s::%s", ns_nests[ns].name, token);
-                            PHPMakeTag(tagname, "variable", 'v');
-                        }
-                        else {
-                            PHPMakeTag(token, "variable", 'v');
-                        }
+                        PHPMakeTag(token, "variable", 'v');
 
                         sprintf(tagname, "%s<%s>", token, ns_nests[ns].name);
                         PHPMakeTag(tagname, "variable", 'v');
