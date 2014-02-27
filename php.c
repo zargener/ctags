@@ -77,6 +77,23 @@ typedef enum {
 
 
 /**
+ * List of PHP predefined variables
+ */
+static const char *php_predefined_vars[] = {
+    "$GLOBALS",
+    "$_SERVER",
+    "$_GET",
+    "$_POST",
+    "$_FILES",
+    "$_COOKIE",
+    "$_SESSION",
+    "$_REQUEST",
+    "$_ENV"
+};
+static const char php_predefined_vars_count = 9;
+
+
+/**
  * Gets lexem position in file and tries to find the nearest beginning
  * of class definition
  */
@@ -143,13 +160,41 @@ int var_belongs_to_class(int fpos) {
 
 
 /**
+ * Check if variable name is one of those global php variables which
+ * are predefined
+ */
+int is_predefined_var(char* vname) {
+
+    int i;
+    char *cur_var;
+    for (i = 0; i < php_predefined_vars_count; i++) {
+        cur_var = (char*)php_predefined_vars[i];
+
+        if (strncmp(cur_var, vname, 32) == 0) {
+            return 1;
+        }
+    }
+
+
+    return 0;
+}
+
+
+/**
  * Just shortcut for adding tag
  */
 void PHPMakeTag(char *tagname, char* kname, char kind) {
     tagEntryInfo tag;
     int copy_start = 0;
-    if (!Option.etags && tagname[0] == '$') 
+    if (!Option.etags && tagname[0] == '$') {
+
+        /* Do not index php standart vars */
+        if (is_predefined_var(tagname)) {
+            return;
+        }
+
         copy_start = 1;
+    }
     initTagEntry (&tag, &tagname[copy_start]);
 	/* strncpy(tag.kindName, kname, 10); */
 	tag.kind = kind;
@@ -162,7 +207,6 @@ void PHPMakeTag(char *tagname, char* kname, char kind) {
  */
 void handle_tokens(char *prev_token,char *token, unsigned int pos, unsigned int deep) {
     if (strlen(token) > 0) {
-        /* printf ("%s >>%s<<\n", prev_token, token); */
 
         /* index namespace */
         if (strncmp(prev_token, "namespace", 255) == 0) {
@@ -239,6 +283,7 @@ void handle_tokens(char *prev_token,char *token, unsigned int pos, unsigned int 
             /* index other variables */
             else {
                 /* first try to find this var in indexed */
+                /* TODO: It will miss same named vars declared in one file */
                 int j = 0;
                 char var_exists = 0;
                 for (j = 0; j < free_vars_count; j++) {
@@ -297,7 +342,6 @@ void close_block_hook(unsigned int brace_deep, unsigned int fpos, int line_numbe
 
 }
 
-/* extern optionValues Option; */
 /**
  * Main parser function, called each time new php file being processed.
  */
@@ -324,13 +368,13 @@ static void findPHPTags (void) {
     char prev_token[256];
     char token_len = 0;
     char cb[6];
+    /* magic number 6 because of len of "<?php" */
 #define CYCLE_BUFFER  cb[5] = 0; cb[0] = cb[1]; cb[1] = cb[2]; cb[2] = cb[3]; cb[3] = cb[4]; cb[4] = curr_char; 
     char in_php = 0;
     
     while ((curr_char = fileGetc()) != EOF )    {
         fpos++;
         CYCLE_BUFFER;
-        /* printf("%c[%d][%d]\n", curr_char, in_string, fpos); */
 
         /* skip all stuff between ?> <?php */
         if ( strncmp(cb, "?>", 2) == 0 ) {
@@ -339,7 +383,6 @@ static void findPHPTags (void) {
         while ( !in_php && ( strncmp(cb, "<?php", 5) != 0 ) ) {
             curr_char = fileGetc();
             CYCLE_BUFFER;
-            /* printf("%s\n", cb); */
 
             if (curr_char == EOF)
                 break;
